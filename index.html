@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Safa Compass Dual Tickers</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .ticker-container {
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    /* TOP TICKER: CURRENCIES */
+    .currency-wrap {
+      background: rgba(15, 23, 42, 0.95);
+      color: #ffffff;
+      padding: 8px 0;
+      white-space: nowrap;
+      border-top: 3px solid #0284c7;
+    }
+    .currency-ticker {
+      display: inline-block;
+      animation: marquee 35s linear infinite;
+    }
+
+    /* BOTTOM TICKER: FLIGHT DEALS */
+    .flight-wrap {
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      padding: 8px 0;
+      white-space: nowrap;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .flight-ticker {
+      display: inline-block;
+      animation: marquee 45s linear infinite; /* Slightly slower speed */
+    }
+
+    .ticker-item {
+      display: inline-block;
+      padding: 0 20px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .badge-rates { color: #38bdf8; text-transform: uppercase; }
+    .badge-flights { color: #f59e0b; text-transform: uppercase; }
+    .price { color: #4ade80; font-weight: 700; }
+    .route { color: #e0f2fe; }
+    
+    @keyframes marquee {
+      0% { transform: translate3d(100%, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ticker-container">
+    <!-- Top Bar: Currencies -->
+    <div class="currency-wrap">
+      <div class="currency-ticker" id="currency-content">
+        <span class="ticker-item">🌐 Loading live exchange rates...</span>
+      </div>
+    </div>
+
+    <!-- Bottom Bar: Flight Deals -->
+    <div class="flight-wrap">
+      <div class="flight-ticker" id="flight-content">
+        <span class="ticker-item">✈️ Loading target flight deals...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CURRENCY_API = 'https://open.er-api.com/v6/latest/USD';
+
+    const flightDealsData = [
+      { origin: "LHR (London)", dest: "KUL (Kuala Lumpur)", price: "$485", note: "Hijrah / Expat Hub" },
+      { origin: "DUB (Dublin)", dest: "IST (Istanbul)", price: "$240", note: "Türkiye Expat" },
+      { origin: "JFK (New York)", dest: "JED (Jeddah)", price: "$620", note: "Umrah / Saudi" },
+      { origin: "LAX (Los Angeles)", dest: "DXB (Dubai)", price: "$590", note: "UAE Expat Hub" },
+      { origin: "SYD (Sydney)", dest: "DPS (Bali/Lombok)", price: "$290", note: "Halal Tourism" },
+      { origin: "AKL (Auckland)", dest: "KUL (Kuala Lumpur)", price: "$540", note: "Nomad" },
+      { origin: "JNB (Johannesburg)", dest: "DOH (Doha)", price: "$410", note: "Qatar Living" },
+      { origin: "CPT (Cape Town)", dest: "DXB (Dubai)", price: "$460", note: "UAE Expat" },
+      { origin: "SIN (Singapore)", dest: "BKK (Bangkok)", price: "$75", note: "Regional Nomad" },
+      { origin: "YYZ (Toronto)", dest: "CMN (Casablanca)", price: "$530", note: "Morocco Travel" },
+      { origin: "DXB (Dubai)", dest: "CAI (Cairo)", price: "$190", note: "Egypt Arabic Study" },
+      { origin: "ORD (Chicago)", dest: "AMM (Amman)", price: "$640", note: "Jordan Culture" },
+      { origin: "SIN (Singapore)", dest: "SGN (Ho Chi Minh)", price: "$65", note: "Vietnam Travel" },
+      { origin: "KUL (Kuala Lumpur)", dest: "MNL (Manila)", price: "$85", note: "Philippines Travel" }
+    ];
+
+    async function updateTicker() {
+      try {
+        // Fetch Currencies
+        const currRes = await fetch(CURRENCY_API);
+        const currData = await currRes.json();
+        const r = currData.rates;
+
+        document.getElementById('currency-content').innerHTML = `
+          <span class="ticker-item"><span class="badge-rates">💱 LIVE RATES (1 USD):</span></span>
+          <span class="ticker-item">🇮🇪/🇪🇺 ${r.EUR ? r.EUR.toFixed(2) : '0.92'} EUR</span>
+          <span class="ticker-item">🇿🇦 ${r.ZAR ? r.ZAR.toFixed(2) : '18.10'} ZAR</span>
+          <span class="ticker-item">🇳🇿 ${r.NZD ? r.NZD.toFixed(2) : '1.65'} NZD</span>
+          <span class="ticker-item">🇲🇾 ${r.MYR ? r.MYR.toFixed(2) : '4.45'} MYR</span>
+          <span class="ticker-item">🇸🇬 ${r.SGD ? r.SGD.toFixed(2) : '1.34'} SGD</span>
+          <span class="ticker-item">🇦🇪 ${r.AED ? r.AED.toFixed(2) : '3.67'} AED</span>
+          <span class="ticker-item">🇸🇦 ${r.SAR ? r.SAR.toFixed(2) : '3.75'} SAR</span>
+          <span class="ticker-item">🇹🇷 ${r.TRY ? r.TRY.toFixed(2) : '34.20'} TRY</span>
+          <span class="ticker-item">🇮🇩 ${r.IDR ? Math.round(r.IDR) : '15600'} IDR</span>
+          <span class="ticker-item">🇹🇭 ${r.THB ? r.THB.toFixed(2) : '34.5'} THB</span>
+        `;
+
+        // Build Flight Deals
+        let flightsText = `<span class="ticker-item"><span class="badge-flights">✈️ FLIGHT DEALS:</span></span>`;
+        flightDealsData.forEach(deal => {
+          flightsText += `
+            <span class="ticker-item">
+              <span class="route">${deal.origin} ➔ ${deal.dest}</span>: 
+              <span class="price">${deal.price}</span> 
+              <i>(${deal.note})</i>
+            </span>`;
+        });
+
+        document.getElementById('flight-content').innerHTML = flightsText;
+      } catch (err) {
+        console.error("Ticker fetch error:", err);
+      }
+    }
+
+    updateTicker();
+    setInterval(updateTicker, 1800000);
+  </script>
+</body>
+</html>
