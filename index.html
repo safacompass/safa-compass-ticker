@@ -1,107 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Safa Compass Ticker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safa Compass 24 — Dual Broadcast Ticker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: transparent;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-      width: 100vw;
+    :root {
+      --navy-deep: #000b30;
+      --navy-mid: #05164d;
+      --navy-light: #0b226b;
+      --gold-primary: #d4af37;
+      --gold-bright: #f3d98b;
+      --gold-dark: #9c7b1c;
+      --text-white: #f8fafc;
+      --text-muted: #cbd5e1;
+      --up-green: #34d399;
+      --down-red: #f87171;
     }
-    .ticker-container {
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent; /* Transparent for OneStream Live overlay */
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Bottom Ticker Dock (Fits the ~180px bottom navy bar of your template) */
+    .ticker-dock {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 1920px;
+      height: 176px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      width: 100%;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 24px 16px 24px;
+      background: linear-gradient(180deg, rgba(0, 11, 48, 0.96) 0%, #000b30 100%);
+      border-top: 2px solid var(--gold-primary);
     }
-    .bar {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      padding: 8px 0;
-    }
-    .rates-bar {
-      background: rgba(15, 23, 42, 0.95);
-      border-top: 3px solid #0284c7;
-      color: #ffffff;
-    }
-    .flights-bar {
-      background: rgba(15, 23, 42, 0.85);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-    }
-    .scroll-text {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 35s linear infinite;
-      font-size: 16px;
-      font-weight: bold;
-    }
-    .flights-text {
-      animation-duration: 45s;
-    }
-    .item { margin-right: 35px; }
-    .badge { color: #38bdf8; text-transform: uppercase; }
-    .badge-flight { color: #f59e0b; text-transform: uppercase; }
-    .price { color: #4ade80; }
 
-    @keyframes marquee {
+    /* Individual Ticker Row */
+    .ticker-row {
+      display: flex;
+      align-items: center;
+      height: 68px;
+      width: 100%;
+      background: linear-gradient(90deg, var(--navy-mid) 0%, var(--navy-deep) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Left Category Badge */
+    .ticker-badge {
+      flex-shrink: 0;
+      height: 100%;
+      min-width: 220px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    /* Top Row Badge: Gold Gradient */
+    .badge-gold {
+      background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-primary) 55%, var(--gold-dark) 100%);
+      color: var(--navy-deep);
+      border-right: 2px solid var(--gold-bright);
+    }
+
+    /* Bottom Row Badge: Deep Navy with Gold Border */
+    .badge-navy {
+      background: linear-gradient(135deg, var(--navy-light) 0%, var(--navy-deep) 100%);
+      color: var(--gold-bright);
+      border-right: 2px solid var(--gold-primary);
+    }
+
+    /* Scrolling Viewport */
+    .ticker-viewport {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      /* Soft edge fade so text enters/exits cleanly */
+      mask-image: linear-gradient(90deg, transparent 0%, #000 2%, #000 98%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 2%, #000 98%, transparent 100%);
+    }
+
+    .ticker-track {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      will-change: transform;
+      animation: scroll-left 45s linear infinite;
+    }
+
+    .ticker-row.slow .ticker-track {
+      animation-duration: 55s;
+    }
+
+    @keyframes scroll-left {
       0% { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Ticker Item Styling */
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 28px;
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-white);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .item-label {
+      color: var(--gold-bright);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .item-value {
+      color: var(--text-white);
+      font-weight: 700;
+    }
+
+    .item-meta {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .status-pill {
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-on-time {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--up-green);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+    }
+
+    .status-delayed {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--down-red);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+    }
+
+    /* Gold Diamond Divider */
+    .divider {
+      color: var(--gold-primary);
+      font-size: 16px;
+      opacity: 0.85;
     }
   </style>
 </head>
 <body>
 
-  <div class="ticker-container">
-    <div class="bar rates-bar">
-      <div class="scroll-text" id="rates">
-        <span class="item"><span class="badge">💱 LIVE RATES (1 USD):</span></span>
-        <span class="item">🇪🇺 0.92 EUR</span>
-        <span class="item">🇿🇦 18.10 ZAR</span>
-        <span class="item">🇳🇿 1.65 NZD</span>
-        <span class="item">🇲🇾 4.45 MYR</span>
-        <span class="item">🇸🇬 1.34 SGD</span>
-        <span class="item">🇦🇪 3.67 AED</span>
-        <span class="item">🇸🇦 3.75 SAR</span>
-        <span class="item">🇹🇷 34.20 TRY</span>
+  <div class="ticker-dock">
+    <!-- TICKER 1: CURRENCY EXCHANGE RATES -->
+    <div class="ticker-row">
+      <div class="ticker-badge badge-gold">FX RATES</div>
+      <div class="ticker-viewport">
+        <div class="ticker-track" id="fx-track"></div>
       </div>
     </div>
-    <div class="bar flights-bar">
-      <div class="scroll-text flights-text" id="flights">
-        <span class="item"><span class="badge-flight">✈️ FLIGHT DEALS:</span></span>
-        <span class="item">LHR ➔ KUL: <span class="price">$485</span> <i>(Hijrah Hub)</i></span>
-        <span class="item">DUB ➔ IST: <span class="price">$240</span> <i>(Türkiye Expat)</i></span>
-        <span class="item">JFK ➔ JED: <span class="price">$620</span> <i>(Umrah / Saudi)</i></span>
-        <span class="item">AKL ➔ KUL: <span class="price">$540</span> <i>(Nomad)</i></span>
-        <span class="item">JNB ➔ DOH: <span class="price">$410</span> <i>(Qatar Living)</i></span>
+
+    <!-- TICKER 2: LIVE FLIGHT STATUS -->
+    <div class="ticker-row slow">
+      <div class="ticker-badge badge-navy">FLIGHT WATCH</div>
+      <div class="ticker-viewport">
+        <div class="ticker-track" id="flight-track"></div>
       </div>
     </div>
   </div>
 
   <script>
-    fetch('https://open.er-api.com/v6/latest/USD')
-      .then(res => res.json())
-      .then(data => {
-        const r = data.rates;
-        if (r) {
-          document.getElementById('rates').innerHTML = `
-            <span class="item"><span class="badge">💱 LIVE RATES (1 USD):</span></span>
-            <span class="item">🇪🇺 ${r.EUR ? r.EUR.toFixed(2) : '0.92'} EUR</span>
-            <span class="item">🇿🇦 ${r.ZAR ? r.ZAR.toFixed(2) : '18.10'} ZAR</span>
-            <span class="item">🇳🇿 ${r.NZD ? r.NZD.toFixed(2) : '1.65'} NZD</span>
-            <span class="item">🇲🇾 ${r.MYR ? r.MYR.toFixed(2) : '4.45'} MYR</span>
-            <span class="item">🇸🇬 ${r.SGD ? r.SGD.toFixed(2) : '1.34'} SGD</span>
-            <span class="item">🇦🇪 ${r.AED ? r.AED.toFixed(2) : '3.67'} AED</span>
-            <span class="item">🇸🇦 ${r.SAR ? r.SAR.toFixed(2) : '3.75'} SAR</span>
-            <span class="item">🇹🇷 ${r.TRY ? r.TRY.toFixed(2) : '34.20'} TRY</span>
-          `;
-        }
-      })
-      .catch(err => console.log('Using static fallback values'));
+    // Replace this with your Google Sheet published CSV URL
+    const SHEET_CSV_URL = "YOUR_PUBLISHED_GOOGLE_SHEET_CSV_URL_HERE";
+
+    // Sample fallback data (so the layout renders immediately while testing)
+    const sampleFX = [
+      { pair: "USD / SAR", rate: "3.7504", note: "SAUDI RIYAL" },
+      { pair: "GBP / SAR", rate: "4.7820", note: "BRITISH POUND" },
+      { pair: "EUR / SAR", rate: "4.0615", note: "EURO" },
+      { pair: "CAD / SAR", rate: "2.7190", note: "CANADIAN DOLLAR" },
+      { pair: "AUD / SAR", rate: "2.4650", note: "AUSTRALIAN DOLLAR" },
+      { pair: "MYR / SAR", rate: "0.8410", note: "MALAYSIAN RINGGIT" }
+    ];
+
+    const sampleFlights = [
+      { flight: "SV 020", route: "JFK → JED", time: "14:35", status: "ON TIME", ok: true },
+      { flight: "SV 112", route: "LHR → JED", time: "15:10", status: "LANDED", ok: true },
+      { flight: "QR 1184", route: "DOH → MED", time: "16:05", status: "ON TIME", ok: true },
+      { flight: "EK 803", route: "DXB → JED", time: "16:45", status: "DELAYED 20M", ok: false },
+      { flight: "TK 096", route: "IST → MED", time: "17:20", status: "BOARDING", ok: true }
+    ];
+
+    function renderFXTicker(items) {
+      const track = document.getElementById("fx-track");
+      const html = items.map(item => `
+        <div class="ticker-item">
+          <span class="item-label">${item.pair}</span>
+          <span class="item-value">${item.rate}</span>
+          <span class="item-meta">(${item.note})</span>
+        </div>
+        <span class="divider">◆</span>
+      `).join("");
+      // Duplicate content once for seamless infinite loop
+      track.innerHTML = html + html;
+    }
+
+    function renderFlightTicker(items) {
+      const track = document.getElementById("flight-track");
+      const html = items.map(item => `
+        <div class="ticker-item">
+          <span class="item-label">${item.flight}</span>
+          <span class="item-value">${item.route}</span>
+          <span class="item-meta">${item.time}</span>
+          <span class="status-pill ${item.ok ? 'status-on-time' : 'status-delayed'}">${item.status}</span>
+        </div>
+        <span class="divider">◆</span>
+      `).join("");
+      track.innerHTML = html + html;
+    }
+
+    async function fetchGoogleSheetData() {
+      if (!SHEET_CSV_URL || SHEET_CSV_URL.includes("YOUR_PUBLISHED")) {
+        renderFXTicker(sampleFX);
+        renderFlightTicker(sampleFlights);
+        return;
+      }
+
+      try {
+        // Cache-busting timestamp ensures OneStream Live always gets fresh sheet values
+        const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
+        const csvText = await res.text();
+        
+        // Parse your CSV rows here and pass into renderFXTicker() / renderFlightTicker()
+        console.log("Fetched live CSV:", csvText);
+      } catch (err) {
+        console.error("Sheet fetch error, keeping last good data:", err);
+      }
+    }
+
+    // Initial load + refresh every 60 seconds
+    fetchGoogleSheetData();
+    setInterval(fetchGoogleSheetData, 60000);
   </script>
 </body>
 </html>
