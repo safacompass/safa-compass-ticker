@@ -59,15 +59,25 @@
     .sidebar-header {
       background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold-primary) 60%, var(--gold-dark) 100%);
       color: var(--navy-deep);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
-      letter-spacing: 1.2px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
-      padding: 6px 12px;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 2px solid var(--gold-dark);
+    }
+
+    .origin-pill {
+      background: var(--navy-deep);
+      color: var(--gold-bright);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
     }
 
     .advisory-list {
@@ -76,10 +86,14 @@
       padding: 6px 10px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
+      transition: opacity 0.35s ease;
     }
 
-    /* Hide scrollbar for clean broadcast appearance */
+    .advisory-list.fading {
+      opacity: 0;
+    }
+
     .advisory-list::-webkit-scrollbar {
       display: none;
     }
@@ -95,11 +109,11 @@
       background: rgba(11, 34, 107, 0.45);
       border: 1px solid rgba(212, 175, 55, 0.25);
       border-radius: 5px;
-      padding: 5px 8px;
+      padding: 4px 8px;
     }
 
     .advisory-country {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--text-white);
       line-height: 1.2;
@@ -112,7 +126,7 @@
     }
 
     .badge-level {
-      padding: 3px 6px;
+      padding: 2px 6px;
       border-radius: 4px;
       font-size: 10px;
       font-weight: 800;
@@ -213,11 +227,11 @@
       align-items: center;
       white-space: nowrap;
       will-change: transform;
-      animation: scroll-left 45s linear infinite;
+      animation: scroll-left 55s linear infinite;
     }
 
     .ticker-row.slow .ticker-track {
-      animation-duration: 60s;
+      animation-duration: 75s;
     }
 
     @keyframes scroll-left {
@@ -279,11 +293,11 @@
 </head>
 <body>
 
-  <!-- MIDDLE RIGHT SIDEBAR: TRAVEL ADVISORIES -->
+  <!-- MIDDLE RIGHT SIDEBAR: ROTATING AUDIENCE COUNTRY ADVISORIES -->
   <div class="sidebar-box">
     <div class="sidebar-header">
-      <span>Travel Advisories</span>
-      <span style="font-size: 11px; color: var(--navy-deep); opacity: 0.85;">LIVE</span>
+      <span id="advisory-title">USA ADVISORIES</span>
+      <span class="origin-pill" id="advisory-source">STATE DEPT</span>
     </div>
     <div class="advisory-list" id="advisory-container"></div>
   </div>
@@ -311,49 +325,176 @@
     // Replace with your published Google Sheet CSV URL to pull live rates & fares
     const SHEET_CSV_URL = "YOUR_PUBLISHED_GOOGLE_SHEET_CSV_URL_HERE";
 
-    // 1. Travel Advisories Data
-    const travelAdvisories = [
-      { country: "Saudi Arabia", level: "Level 2", badgeClass: "level-2", note: "Exercise Caution" },
-      { country: "Türkiye", level: "Level 2", badgeClass: "level-2", note: "Border Vigilance" },
-      { country: "UAE", level: "Level 1", badgeClass: "level-1", note: "Normal Precautions" },
-      { country: "Malaysia", level: "Level 1", badgeClass: "level-1", note: "Standard Safety" },
-      { country: "Egypt", level: "Level 2", badgeClass: "level-2", note: "Reconsider Border Areas" },
-      { country: "Jordan", level: "Level 2", badgeClass: "level-2", note: "Exercise Caution" }
+    // 1. Advisories Grouped by All 9 Core Audience Origin Countries/Regions
+    const audienceAdvisories = [
+      {
+        originTitle: "USA ADVISORIES",
+        sourceTag: "STATE DEPT",
+        items: [
+          { country: "Saudi Arabia", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" },
+          { country: "Türkiye", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" },
+          { country: "UAE", level: "Level 1", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Malaysia", level: "Level 1", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Egypt", level: "Level 2", badgeClass: "level-2", note: "Increased Caution" },
+          { country: "Jordan", level: "Level 2", badgeClass: "level-2", note: "Increased Caution" }
+        ]
+      },
+      {
+        originTitle: "IRELAND ADVISORIES",
+        sourceTag: "DFA IRELAND",
+        items: [
+          { country: "Saudi Arabia", level: "High Caution", badgeClass: "level-2", note: "Regional Awareness" },
+          { country: "Türkiye", level: "High Caution", badgeClass: "level-2", note: "Avoid Border Areas" },
+          { country: "UAE", level: "Normal", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Malaysia", level: "Normal", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Egypt", level: "High Caution", badgeClass: "level-2", note: "Avoid Border Regions" },
+          { country: "Jordan", level: "High Caution", badgeClass: "level-2", note: "Regional Vigilance" }
+        ]
+      },
+      {
+        originTitle: "AUSTRALIA ADVISORIES",
+        sourceTag: "SMARTRAVELLER",
+        items: [
+          { country: "Saudi Arabia", level: "Level 2", badgeClass: "level-2", note: "High Degree of Caution" },
+          { country: "Türkiye", level: "Level 2", badgeClass: "level-2", note: "High Degree of Caution" },
+          { country: "UAE", level: "Level 2", badgeClass: "level-2", note: "High Degree of Caution" },
+          { country: "Malaysia", level: "Level 1", badgeClass: "level-1", note: "Normal Safety Precautions" },
+          { country: "Egypt", level: "Level 3", badgeClass: "level-3", note: "Reconsider Need to Travel" },
+          { country: "Jordan", level: "Level 2", badgeClass: "level-2", note: "High Degree of Caution" }
+        ]
+      },
+      {
+        originTitle: "UK ADVISORIES",
+        sourceTag: "UK FCDO",
+        items: [
+          { country: "Saudi Arabia", level: "Advisory", badgeClass: "level-2", note: "Check Yemen Border Rules" },
+          { country: "Türkiye", level: "Advisory", badgeClass: "level-2", note: "Avoid Syria/Iraq Borders" },
+          { country: "UAE", level: "Standard", badgeClass: "level-1", note: "See Local Laws & Customs" },
+          { country: "Malaysia", level: "Standard", badgeClass: "level-1", note: "Coastal Sabah Advisory" },
+          { country: "Egypt", level: "Advisory", badgeClass: "level-2", note: "North Sinai Restrictions" },
+          { country: "Jordan", level: "Advisory", badgeClass: "level-2", note: "Border Zone Restrictions" }
+        ]
+      },
+      {
+        originTitle: "CANADA ADVISORIES",
+        sourceTag: "GOV CANADA",
+        items: [
+          { country: "Saudi Arabia", level: "High Caution", badgeClass: "level-2", note: "Exercise High Caution" },
+          { country: "Türkiye", level: "High Caution", badgeClass: "level-2", note: "Exercise High Caution" },
+          { country: "UAE", level: "High Caution", badgeClass: "level-2", note: "Regional Security" },
+          { country: "Malaysia", level: "Normal", badgeClass: "level-1", note: "Normal Security Precautions" },
+          { country: "Egypt", level: "High Caution", badgeClass: "level-2", note: "Avoid Non-Essential Border" },
+          { country: "Jordan", level: "High Caution", badgeClass: "level-2", note: "Exercise High Caution" }
+        ]
+      },
+      {
+        originTitle: "NEW ZEALAND ADVISORIES",
+        sourceTag: "SAFETRAVEL NZ",
+        items: [
+          { country: "Saudi Arabia", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" },
+          { country: "Türkiye", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" },
+          { country: "UAE", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" },
+          { country: "Malaysia", level: "Level 1", badgeClass: "level-1", note: "Exercise Normal Caution" },
+          { country: "Egypt", level: "Level 2", badgeClass: "level-2", note: "Increased Caution / Borders" },
+          { country: "Jordan", level: "Level 2", badgeClass: "level-2", note: "Exercise Increased Caution" }
+        ]
+      },
+      {
+        originTitle: "SOUTH AFRICA ADVISORIES",
+        sourceTag: "DIRCO SA",
+        items: [
+          { country: "Saudi Arabia", level: "Standard", badgeClass: "level-1", note: "Hajj/Umrah Visa Rules" },
+          { country: "Türkiye", level: "Caution", badgeClass: "level-2", note: "Regional Border Awareness" },
+          { country: "UAE", level: "Standard", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Malaysia", level: "Standard", badgeClass: "level-1", note: "Visa-Free Entry Rules" },
+          { country: "Egypt", level: "Caution", badgeClass: "level-2", note: "Sinai & Border Vigilance" },
+          { country: "Jordan", level: "Caution", badgeClass: "level-2", note: "Regional Vigilance" }
+        ]
+      },
+      {
+        originTitle: "SINGAPORE ADVISORIES",
+        sourceTag: "MFA SINGAPORE",
+        items: [
+          { country: "Saudi Arabia", level: "Vigilance", badgeClass: "level-2", note: "e-Register & Regional Alert" },
+          { country: "Türkiye", level: "Vigilance", badgeClass: "level-2", note: "Avoid Border Areas" },
+          { country: "UAE", level: "Normal", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Malaysia", level: "Normal", badgeClass: "level-1", note: "Standard Cross-Border" },
+          { country: "Egypt", level: "Caution", badgeClass: "level-2", note: "Defer Non-Essential Sinai" },
+          { country: "Jordan", level: "Vigilance", badgeClass: "level-2", note: "Regional Awareness" }
+        ]
+      },
+      {
+        originTitle: "EU ADVISORIES",
+        sourceTag: "EU CONSULAR",
+        items: [
+          { country: "Saudi Arabia", level: "Caution", badgeClass: "level-2", note: "Regional Security Alert" },
+          { country: "Türkiye", level: "Caution", badgeClass: "level-2", note: "Border Zone Restrictions" },
+          { country: "UAE", level: "Normal", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Malaysia", level: "Normal", badgeClass: "level-1", note: "Normal Precautions" },
+          { country: "Egypt", level: "High Caution", badgeClass: "level-2", note: "Border & Sinai Advisories" },
+          { country: "Jordan", level: "Caution", badgeClass: "level-2", note: "Regional Vigilance" }
+        ]
+      }
     ];
 
-    function renderAdvisories() {
+    let currentAdvisoryIndex = 0;
+
+    function renderAdvisoryGroup(index) {
+      const group = audienceAdvisories[index];
+      const titleEl = document.getElementById("advisory-title");
+      const sourceEl = document.getElementById("advisory-source");
       const container = document.getElementById("advisory-container");
-      container.innerHTML = travelAdvisories.map(item => `
-        <div class="advisory-card">
-          <div>
-            <div class="advisory-country">${item.country}</div>
-            <div class="advisory-desc">${item.note}</div>
+
+      container.classList.add("fading");
+
+      setTimeout(() => {
+        titleEl.textContent = group.originTitle;
+        sourceEl.textContent = group.sourceTag;
+        container.innerHTML = group.items.map(item => `
+          <div class="advisory-card">
+            <div>
+              <div class="advisory-country">${item.country}</div>
+              <div class="advisory-desc">${item.note}</div>
+            </div>
+            <div class="badge-level ${item.badgeClass}">${item.level}</div>
           </div>
-          <div class="badge-level ${item.badgeClass}">${item.level}</div>
-        </div>
-      `).join("");
+        `).join("");
+        container.classList.remove("fading");
+      }, 300);
     }
 
-    // 2. Currency Exchange Rates
+    // Cycle through all 9 audience countries every 8 seconds
+    function startAudienceAdvisoryRotation() {
+      renderAdvisoryGroup(0);
+      setInterval(() => {
+        currentAdvisoryIndex = (currentAdvisoryIndex + 1) % audienceAdvisories.length;
+        renderAdvisoryGroup(currentAdvisoryIndex);
+      }, 8000);
+    }
+
+    // 2. Currency Exchange Rates (All Audience Currencies -> SAR)
     const sampleFX = [
-      { pair: "USD / SAR", rate: "3.7504", note: "SAUDI RIYAL" },
+      { pair: "USD / SAR", rate: "3.7504", note: "US DOLLAR" },
+      { pair: "EUR / SAR", rate: "4.0615", note: "EURO (IRELAND / EU)" },
       { pair: "GBP / SAR", rate: "4.7820", note: "BRITISH POUND" },
-      { pair: "EUR / SAR", rate: "4.0615", note: "EURO" },
-      { pair: "CAD / SAR", rate: "2.7190", note: "CANADIAN DOLLAR" },
       { pair: "AUD / SAR", rate: "2.4650", note: "AUSTRALIAN DOLLAR" },
-      { pair: "MYR / SAR", rate: "0.8410", note: "MALAYSIAN RINGGIT" }
+      { pair: "CAD / SAR", rate: "2.7190", note: "CANADIAN DOLLAR" },
+      { pair: "NZD / SAR", rate: "2.2410", note: "NEW ZEALAND DOLLAR" },
+      { pair: "ZAR / SAR", rate: "0.2115", note: "SOUTH AFRICAN RAND" },
+      { pair: "SGD / SAR", rate: "2.7980", note: "SINGAPORE DOLLAR" }
     ];
 
-    // 3. Flight Prices (Core Audience Hubs -> Target Destinations)
+    // 3. Flight Prices (All Core Audience Hubs -> Target Destinations)
     const sampleFlightFares = [
       { route: "NEW YORK (JFK) → JEDDAH", price: "$685", trip: "ROUND-TRIP", deal: true },
+      { route: "DUBLIN (DUB) → JEDDAH", price: "€445", trip: "ROUND-TRIP", deal: true },
       { route: "LONDON (LHR) → JEDDAH", price: "£410", trip: "ROUND-TRIP", deal: true },
       { route: "TORONTO (YYZ) → ISTANBUL", price: "CAD $840", trip: "ROUND-TRIP", deal: false },
-      { route: "NEW YORK (JFK) → DUBAI", price: "$720", trip: "ROUND-TRIP", deal: false },
-      { route: "LONDON (LHR) → KUALA LUMPUR", price: "£560", trip: "ROUND-TRIP", deal: true },
       { route: "SYDNEY (SYD) → KUALA LUMPUR", price: "AUD $590", trip: "ROUND-TRIP", deal: true },
-      { route: "CHICAGO (ORD) → AMMAN", price: "$795", trip: "ROUND-TRIP", deal: false },
-      { route: "LONDON (LHR) → CAIRO", price: "£325", trip: "ROUND-TRIP", deal: true }
+      { route: "AUCKLAND (AKL) → KUALA LUMPUR", price: "NZD $745", trip: "ROUND-TRIP", deal: true },
+      { route: "JOHANNESBURG (JNB) → JEDDAH", price: "ZAR 9,850", trip: "ROUND-TRIP", deal: true },
+      { route: "SINGAPORE (SIN) → JEDDAH", price: "SGD $680", trip: "ROUND-TRIP", deal: true },
+      { route: "FRANKFURT (FRA) → ISTANBUL", price: "€215", trip: "ROUND-TRIP", deal: true }
     ];
 
     function renderFXTicker(items) {
@@ -392,31 +533,15 @@
       try {
         const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
         const csvText = await res.text();
-        // Parse CSV rows from your Google Sheet into renderFXTicker() & renderFlightTicker()
         console.log("Fetched live CSV:", csvText);
       } catch (err) {
         console.error("Sheet fetch error:", err);
       }
     }
 
-    // Auto-scroll the Travel Advisories list smoothly so all 6 countries are visible on 24/7 stream
-    function startAdvisoryAutoScroll() {
-      const list = document.getElementById("advisory-container");
-      let direction = 1;
-      setInterval(() => {
-        if (!list) return;
-        list.scrollTop += direction;
-        if (list.scrollTop + list.clientHeight >= list.scrollHeight - 1) {
-          direction = -1;
-        } else if (list.scrollTop <= 0) {
-          direction = 1;
-        }
-      }, 50);
-    }
-
-    renderAdvisories();
+    // Initialize everything
+    startAudienceAdvisoryRotation();
     fetchGoogleSheetData();
-    startAdvisoryAutoScroll();
     setInterval(fetchGoogleSheetData, 60000);
   </script>
 </body>
